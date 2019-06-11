@@ -2,36 +2,61 @@ var USACoords = [39.8283,-98.5795];
 var mapZoomLevel = 5;
 
 // Create the createMap function
-function createMap(earthq){
+function createMap(earthq, plate){
 
   // Create the tile layer that will be the background of our map
-  var lightmap = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
+  var lightMap = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
     attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
     maxZoom: 18,
-    id: "mapbox.streets",
+    id: "mapbox.light",
+    accessToken: API_KEY
+  });
+
+  var darkMap = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
+    attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
+    maxZoom: 18,
+    id: "mapbox.dark",
+    accessToken: API_KEY
+  });
+
+  var satelliteMap = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
+    attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
+    maxZoom: 18,
+    id: "mapbox.streets-satellite",
+    accessToken: API_KEY
+  });
+
+  var outdoorsMap = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
+    attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
+    maxZoom: 18,
+    id: "mapbox.outdoors",
     accessToken: API_KEY
   });
 
   // Create a baseMaps object to hold the lightmap layer
   var baseMaps = {
-    "Light Map": lightmap
+    "Light Map": lightMap,
+    "Dark Map": darkMap,
+    "Satellite": satelliteMap,
+    "Outdoors": outdoorsMap,
   };
 
   // Create an overlayMaps object to hold the earthq layer
   var overlayMaps = {
-    "Earthquakes": earthq
+    "Earthquakes": earthq,
+    "Fault Lines": plate
   };
 
   // Create the map object with options
   var myMap = L.map("map-id", {
     center: USACoords,
     zoom: mapZoomLevel,
-    layers:[lightmap,earthq]
+    layers:[lightMap,plate,earthq]
   });
 
   // Create a layer control, pass in the baseMaps and overlayMaps. Add the layer control to the map
   L.control.layers(baseMaps, overlayMaps, {
-    collapsed: true
+    collapsed: false
   }).addTo(myMap);  
 
   //create a legend for our map
@@ -99,7 +124,7 @@ function getMinMaxMag(eqData){
   return [max,min];
 };
 
-function createFeatures(earthquakeData) {
+function createFeatures(earthquakeData, platesData) {
 
   var minMaxMag = getMinMaxMag(earthquakeData);
   var maxMag = minMaxMag[0];
@@ -109,7 +134,7 @@ function createFeatures(earthquakeData) {
 
   var radiusScale = d3.scaleLinear()
     .domain([minMag,maxMag])
-    .range([3,25]);
+    .range([3,20]);
 
   var earthquakes = L.geoJSON(earthquakeData, {
     pointToLayer: function(feature, latlng){
@@ -127,15 +152,21 @@ function createFeatures(earthquakeData) {
     }
   });
 
+  var plates = L.geoJSON(platesData, {color: 'orange', fill:false});
+
   // Sending our earthquakes layer to the createMap function
-  createMap(earthquakes);
+  createMap(earthquakes, plates);
 }
 
 // Perform an API call to the Earthquake data. Call createFeatures when complete
 
 var url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson";
+var secondUrl = "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_plates.json";
 
 d3.json(url, function(response){
+  d3.json(secondUrl, function(platesResponse){
   console.log(response.features);
-  createFeatures(response.features);
+  console.log(platesResponse.features)
+  createFeatures(response.features, platesResponse.features);
+  });
 });
