@@ -57,6 +57,7 @@ function createMap(earthq){
 
 };
 
+/*
 function getRadius(mag){
   if(mag > 5){
     return 25;
@@ -77,6 +78,7 @@ function getRadius(mag){
     return 3;
   };
 };
+*/
 
 function getColor(d) {
   return d > 5 ? 'darkred' :
@@ -87,19 +89,32 @@ function getColor(d) {
                     'green';
 };
 
+function getMinMaxMag(eqData){
+  var max = -100000;
+  var min = 100000;
+  for(var i = 0; i < eqData.length; i++){
+    max = Math.max(parseFloat(eqData[i].properties.mag),max);
+    min = Math.min(parseFloat(eqData[i].properties.mag),min);
+  };
+  return [max,min];
+};
+
 function createFeatures(earthquakeData) {
 
-  //console.log(d3.max(earthquakeData))
+  var minMaxMag = getMinMaxMag(earthquakeData);
+  var maxMag = minMaxMag[0];
+  var minMag = minMaxMag[1];
 
-  // var linearScale = d3.scaleLinear()
-  //   .domain([0,maxMag])
-  //   .range([3,25]);
-  // return (linearScale(mag));
+  console.log(minMaxMag);
+
+  var radiusScale = d3.scaleLinear()
+    .domain([minMag,maxMag])
+    .range([3,25]);
 
   var earthquakes = L.geoJSON(earthquakeData, {
     pointToLayer: function(feature, latlng){
       var geojsonMarkerOptions = {
-        radius: getRadius(feature.properties.mag),
+        radius: radiusScale(feature.properties.mag),
         fillColor: getColor(feature.properties.mag),
         color: "#000",
         weight: 1,
