@@ -34,12 +34,13 @@ function createMap(earthq){
     collapsed: true
   }).addTo(myMap);  
 
+  //create a legend for our map
   var legend = L.control({position: 'bottomright'});
 
   legend.onAdd = function (map) {
 
       var div = L.DomUtil.create('div', 'info legend'),
-          grades = [0, 1, 2, 3, 4, 5, 100],
+          grades = [0, 1, 2, 3, 4, 5],
           labels = [];
 
       // loop through our density intervals and generate a label with a colored square for each interval
@@ -52,7 +53,7 @@ function createMap(earthq){
       return div;
   };
 
-  legend.addTo(map);
+  legend.addTo(myMap);
 
 };
 
@@ -87,6 +88,13 @@ function getColor(d) {
 };
 
 function createFeatures(earthquakeData) {
+
+  //console.log(d3.max(earthquakeData))
+
+  // var linearScale = d3.scaleLinear()
+  //   .domain([0,maxMag])
+  //   .range([3,25]);
+  // return (linearScale(mag));
 
   var earthquakes = L.geoJSON(earthquakeData, {
     pointToLayer: function(feature, latlng){
